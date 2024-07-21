@@ -205,6 +205,38 @@ template:
           {% set target = states('sensor.thermostat_hc1_target_flow_temperature') | float(0) %}
           {{ (current < target) }}
 
+      - name: "GFT vandaag"
+        state: >
+          { is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag') }
+
+      - name: "Restafval vandaag"
+        state: >
+          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag')
+
+      - name: "Papier vandaag"
+        state: >
+          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag')
+
+      - name: "Plastic vandaag"
+        state: >
+          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag')
+
+      - name: "GFT morgen"
+        state: >
+          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen')
+
+      - name: "Restafval morgen"
+        state: >
+          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen')
+
+      - name: "Papier morgen"
+        state: >
+          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen')
+
+      - name: "Plastic morgen"
+        state: >
+          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Morgen')
+
 sensor:
   - platform: integration
     method: left
@@ -301,38 +333,6 @@ sensor:
           {% else %}
             Geen
           {% endif %}
-      gft_vandaag:
-        friendly_name: "GFT vandaag"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag')
-      rest_vandaag:
-        friendly_name: "Restafval vandaag"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag')
-      papier_vandaag:
-        friendly_name: "Papier vandaag"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag')
-      plastic_vandaag:
-        friendly_name: "Plastic vandaag"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag')
-      gft_morgen:
-        friendly_name: "GFT morgen"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen')
-      rest_morgen:
-        friendly_name: "Restafval morgen"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen')
-      papier_morgen:
-        friendly_name: "Papier morgen"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen')
-      plastic_morgen:
-        friendly_name: "Plastic morgen"
-        value_template: >-
-          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Morgen')
 
 utility_meter:
   hysteresis_currentflow_targetflow:
