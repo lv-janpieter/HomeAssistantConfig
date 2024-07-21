@@ -1,0 +1,433 @@
+- id: '1688672435784'
+  alias: Toggle Shield Film
+  description: ''
+  trigger:
+  - platform: device
+    device_id: 943733b073302e786eb902255254dfb9
+    domain: shelly
+    type: single
+    subtype: button
+  condition: []
+  action:
+  - type: toggle
+    device_id: 9398589dfc91fcd94cce7e4f015f70b1
+    entity_id: effd76bd79668a73448ee8156ce1b0a7
+    domain: remote
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - if:
+    - condition: device
+      device_id: 0750ec1203006acec7cfd15d8e04c886
+      domain: media_player
+      entity_id: 81beea91f88eec3f910a470ecc50cfc5
+      type: is_off
+    then:
+    - type: turn_off
+      device_id: 9398589dfc91fcd94cce7e4f015f70b1
+      entity_id: effd76bd79668a73448ee8156ce1b0a7
+      domain: remote
+  mode: single
+- id: opritmotion
+  alias: opritmotion
+  trigger:
+  - platform: webhook
+    webhook_id: opritmotion
+    local_only: false
+    allowed_methods:
+    - PUT
+    - POST
+    - GET
+    - HEAD
+  action:
+  - service: logbook.log
+    data:
+      name: oprit
+      message: beweging op oprit
+  - service: mqtt.publish
+    data:
+      qos: 0
+      retain: false
+      topic: domoticz/in
+      payload: '{"command":"switchlight","idx":989,"switchcmd": "On"};'
+- id: '1696495876306'
+  alias: Automated Daily Snapshot
+  description: ''
+  use_blueprint:
+    path: vorion/create-automated-backups-every-day.yaml
+    input:
+      trigger_time: 03:00:00
+- id: '1698705677731'
+  alias: Compressor boven 40
+  description: Compressor boven 40
+  trigger:
+  - type: power_factor
+    platform: device
+    device_id: 92e20f2e2402e36b27a75aeab971e111
+    entity_id: 8e9a6b19548875092ec71d15cc8c9184
+    domain: sensor
+    above: 40
+  condition: []
+  action:
+  - service: notify.telegram
+    data:
+      message: WARMTEPOMP BOVEN 40
+    enabled: true
+  mode: single
+- alias: Reset Hysterese
+  description: With every compressor state change the hysterese will be reset to 0
+    in order to start a new hysterese
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.boiler_compressor_activity
+  condition: []
+  action:
+  - service: utility_meter.calibrate
+    data:
+      value: '0'
+    target:
+      entity_id: sensor.hysteresis_currentflow_targetflow
+  mode: single
+  id: 9056bcb9d9b743099d27ecfe4df49eb0
+- alias: Reset hysteresis due to actual below target
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.current_below_target
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: sensor.boiler_compressor_activity
+    state: heating
+  action:
+  - service: utility_meter.calibrate
+    data:
+      value: '0'
+    target:
+      entity_id: sensor.hysteresis_currentflow_targetflow
+  mode: single
+  id: d86046ff497c4f76af7a23d247f68998
+- id: '1702410322495'
+  alias: Rolluiken sluiten
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      node_id: 12
+      value: 24
+  condition: []
+  action:
+  - device_id: 3811a3e57ec61b51c0e3f7a680ea72cf
+    domain: cover
+    entity_id: f494e45a9fab1b0429cf872f2a0099a5
+    type: close
+  - device_id: 80ba3bf597c64e50a40efc8da72cf905
+    domain: cover
+    entity_id: 9ea133d58769c80680a0b82dab671a31
+    type: close
+  mode: single
+- id: '1702410385818'
+  alias: Rolluiken openen
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      node_id: 12
+      value: 25
+  condition: []
+  action:
+  - device_id: 3811a3e57ec61b51c0e3f7a680ea72cf
+    domain: cover
+    entity_id: f494e45a9fab1b0429cf872f2a0099a5
+    type: open
+  - device_id: 80ba3bf597c64e50a40efc8da72cf905
+    domain: cover
+    entity_id: 9ea133d58769c80680a0b82dab671a31
+    type: open
+  mode: single
+- id: '1702411860570'
+  alias: Beweging hal
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 9323e63d24563973f30913a96bb470cb
+    entity_id: 03010d5bc0167bd8235d9d5d6067a8dd
+    domain: binary_sensor
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 015745dcb2aeb855cac91bad894c4e58
+    entity_id: 5718b8074bc97a2b8b00969eab9ff3b1
+    domain: light
+  mode: single
+- id: '1702411917977'
+  alias: Beweging gedetecteert einde
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: 9323e63d24563973f30913a96bb470cb
+    entity_id: 03010d5bc0167bd8235d9d5d6067a8dd
+    domain: binary_sensor
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 015745dcb2aeb855cac91bad894c4e58
+    entity_id: 5718b8074bc97a2b8b00969eab9ff3b1
+    domain: light
+  mode: single
+- id: '1702413102296'
+  alias: Ochtend - opritverlichting aan
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:30:00
+  condition:
+  - condition: time
+    before: sensor.sun_next_rising
+  action:
+  - type: turn_on
+    device_id: 6ea8b9b2fce62baea4d4258e5b311865
+    entity_id: 5c21b54873710f4ca52ac55fb94cb328
+    domain: light
+  - type: turn_on
+    device_id: cd668f11e42d7d34b1636129f9ae637b
+    entity_id: 8cd3e3ec062332218f6662dba00fd38b
+    domain: switch
+    enabled: false
+  mode: single
+- id: '1702413333444'
+  alias: Ochtend - opritverlichting uit
+  description: ''
+  trigger:
+  - platform: time
+    at: sensor.sun_next_rising
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 6ea8b9b2fce62baea4d4258e5b311865
+    entity_id: 5c21b54873710f4ca52ac55fb94cb328
+    domain: light
+  - type: turn_off
+    device_id: cd668f11e42d7d34b1636129f9ae637b
+    entity_id: 8cd3e3ec062332218f6662dba00fd38b
+    domain: switch
+  mode: single
+- id: '1702413821418'
+  alias: Avond - verlichting aan zondsondergang
+  description: ''
+  trigger:
+  - platform: time
+    at: sensor.sun_next_setting
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 6ea8b9b2fce62baea4d4258e5b311865
+    entity_id: 5c21b54873710f4ca52ac55fb94cb328
+    domain: light
+  - type: turn_on
+    device_id: 950e267b6110d056a3a42edb619ac886
+    entity_id: c4bc3bc9498720511f01fec6511c8afb
+    domain: switch
+  - type: turn_on
+    device_id: e3605e67c70e565d4cabce554c76d344
+    entity_id: 57866c765c053ffaf82ada520dc4907b
+    domain: light
+    brightness_pct: 65
+  - type: turn_on
+    device_id: cd668f11e42d7d34b1636129f9ae637b
+    entity_id: 8cd3e3ec062332218f6662dba00fd38b
+    domain: switch
+    enabled: false
+  mode: single
+- id: '1702413966779'
+  alias: Avond - verlichting uit 235955
+  description: ''
+  trigger:
+  - platform: time
+    at: '23:59:55'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 6ea8b9b2fce62baea4d4258e5b311865
+    entity_id: 5c21b54873710f4ca52ac55fb94cb328
+    domain: light
+  - type: turn_off
+    device_id: 950e267b6110d056a3a42edb619ac886
+    entity_id: c4bc3bc9498720511f01fec6511c8afb
+    domain: switch
+  - type: turn_off
+    device_id: e3605e67c70e565d4cabce554c76d344
+    entity_id: 57866c765c053ffaf82ada520dc4907b
+    domain: light
+  - type: turn_off
+    device_id: cd668f11e42d7d34b1636129f9ae637b
+    entity_id: 8cd3e3ec062332218f6662dba00fd38b
+    domain: switch
+  mode: single
+- id: '1702930419070'
+  alias: Zet klimaat BMW aan
+  description: ''
+  trigger:
+  - platform: device
+    device_id: 943733b073302e786eb902255254dfb9
+    domain: shelly
+    type: double
+    subtype: button
+  condition: []
+  action:
+  - type: turn_on
+    device_id: c68438dc552775d1f439af91425314c8
+    entity_id: 3643e8785cca740258901ee6c35f20c8
+    domain: switch
+  mode: single
+- id: '1703958580390'
+  alias: Wasmachine klaar
+  description: ''
+  trigger:
+  - type: power
+    platform: device
+    device_id: 409c76a3ad9dbdc29ec40f8db550ffdb
+    entity_id: 08ba68b2597c8dabd45c5694141c82a9
+    domain: sensor
+    below: 10
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  condition: []
+  action:
+  - service: notify.telegram
+    data:
+      message: Wasmachine klaar!
+  - service: tts.google_translate_say
+    data:
+      cache: false
+      entity_id: media_player.huiskamer
+      message: Wasmachine klaar!
+  mode: single
+- id: droger_klaar
+  alias: Droger klaar
+  description: ''
+  trigger:
+  - type: power
+    platform: device
+    device_id: c627c0973c61c4d41686eea7cd4f0acc
+    entity_id: ec0c192312be0a656525b454cc0d6f61
+    domain: sensor
+    below: 10
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+  condition:
+  - condition: template
+    value_template: '  {{ ( as_timestamp(now()) - as_timestamp(state_attr(''automation.droger_klaar'',
+      ''last_triggered'')) |int(0) ) > 15000 }}'
+  action:
+  - service: notify.telegram
+    data:
+      message: Droger klaar!
+  - service: notify.telegram
+    data:
+      message: ' {{ now() - this.attributes.last_triggered }} '
+    enabled: false
+  - service: tts.google_translate_say
+    data:
+      cache: false
+      entity_id: media_player.huiskamer
+      message: Droger klaar
+  mode: single
+- id: '1710090437169'
+  alias: Zonsopgang vijver zuurstof + UV lamp
+  description: ''
+  trigger:
+  - platform: time
+    at: sensor.sun_next_rising
+  condition: []
+  action:
+  - service: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.vijver
+  - delay:
+      hours: 1
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+  - service: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.vijver
+  mode: single
+- id: '1710201027569'
+  alias: Boiler overpowering
+  description: ''
+  trigger: []
+  condition:
+  - type: is_problem
+    condition: device
+    device_id: 4a71649f3e156625975f3d996dac4a0e
+    entity_id: baf3674913adcfbaf72ed535c25c57e9
+    domain: binary_sensor
+  action:
+  - service: telegram_bot.send_message
+    metadata: {}
+    data:
+      message: Boiler overpowering!
+  mode: single
+- id: '1719155725538'
+  alias: Zonnescherm gastenkamers naar beneden
+  description: Dubbelklik op overloop
+  trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      node_id: 6
+      value: 14
+  condition: []
+  action:
+  - device_id: 706e3de06e626c36b9a4ba83461d21f0
+    domain: cover
+    entity_id: 110c557504b9ecffbf61a19d4fb3641e
+    type: close
+  - device_id: 6b49e5a25e64be1154a1548d404eef54
+    domain: cover
+    entity_id: 346277fd40e2d43ed2ef3c63459167cc
+    type: close
+  mode: single
+- id: '1719155920595'
+  alias: Zonnescherm gastenkamers naar omhoog
+  description: Dubbelklik op overloop
+  trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      node_id: 6
+      value: 24
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      node_id: 6
+      value: 25
+  condition: []
+  action:
+  - device_id: 706e3de06e626c36b9a4ba83461d21f0
+    domain: cover
+    entity_id: 110c557504b9ecffbf61a19d4fb3641e
+    type: open
+  - device_id: 6b49e5a25e64be1154a1548d404eef54
+    domain: cover
+    entity_id: 346277fd40e2d43ed2ef3c63459167cc
+    type: open
+  mode: single

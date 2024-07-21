@@ -1,0 +1,357 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+recorder:
+  db_url: !secret mariadb_url
+
+http:
+  ssl_certificate: /ssl/fullchain.pem
+  ssl_key: /ssl/privkey.pem
+
+# Example configuration.yaml entry
+influxdb:
+  host: localhost
+  port: 8086
+  database: home_assistant
+  username: homeassistant
+  password: th09yk
+  ssl: false
+  verify_ssl: false
+  max_retries: 3
+  default_measurement: state
+
+  ### measurements setup ###
+  tags:
+    source: ha
+  tags_attributes:
+    - friendly_name
+  exclude:
+    entities:
+      - zone.home
+    domains:
+      - persistent_notification
+      - person
+  include:
+    domains:
+      - sensor
+      - binary_sensor
+      - sun
+    entities:
+      - weather.home
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+telegram_bot:
+  - platform: polling
+    api_key: 6635273893:AAH9sWZc1SGaCeueVaL0FMFsNH9NpLrOuIs
+    allowed_chat_ids:
+      - 12436005
+
+notify:
+  - platform: telegram
+    name: "telegram"
+    chat_id: 12436005
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+template:
+  - sensor:
+      - name: zonnepanelen_minisysteem_absolute_energy
+        state: >
+          {{ (states('sensor.shelly_zonnepanelen_minisysteem_energy') | float(0) * -1) }}
+        device_class: energy
+        unit_of_measurement: kWh
+
+      - name: zonnepanelen_minisysteem_absolute_power
+        state: >
+          {{ (states('sensor.shelly_zonnepanelen_minisysteem_power') | float(0) * -1) }}
+        device_class: energy
+        unit_of_measurement: W
+
+      - name: nett_usage_energy
+        state: >
+          {{ ((states('sensor.electricity_meter_energieverbruik_tarief_1') | float(0)) +
+            (states('sensor.electricity_meter_energieverbruik_tarief_2') | float(0)) +
+            (states('sensor.solaredge_ac_energy_kwh') | float(0)) -
+            (states('sensor.shelly_zonnepanelen_minisysteem_energy') | float(0)) -
+            (states('sensor.electricity_meter_energieproductie_tarief_1') | float(0)) -
+            (states('sensor.electricity_meter_energieproductie_tarief_2') | float(0)))
+          }}
+        state_class: total_increasing
+        device_class: energy
+        unit_of_measurement: kWh
+
+      - name: monitored_energy
+        state: >
+          {{ ((states('sensor.droger_energy') | float(0)) +
+            (states('sensor.utility_ruimte_wp_wasmachine_switch_0_energy') | float(0)) +
+            (states('sensor.utility_ruimte_wp_wasmachine_switch_1_energy') | float(0)) +
+            (states('sensor.shellyplug_s_80646f81e39b_energy') | float(0)) +
+            (states('sensor.shelly_divers_energy') | float(0)) +
+            (states('sensor.shelly_wtw_energy') | float(0)) +
+            (states('sensor.shelly_koelkast_garage_energy') | float(0)) +
+            (states('sensor.shelly_computerhoek_energy') | float(0)) +
+            (states('sensor.shelly_mediahoek_energy') | float(0)) +
+            (states('sensor.shelly_vaatwasser_energy') | float(0)) +
+            (states('sensor.shelly_boiler_energy') | float(0)) +
+            (states('sensor.shelly_meterkast_utilities_energy') | float(0)) +
+            (states('sensor.alfen_wallbox_meter_reading_socket_1') | float(0)) +
+            (states('sensor.shelly_vloerverwarming_douche_switch_0_energy') | float(0)))
+          }}
+        state_class: total_increasing
+        device_class: energy
+        unit_of_measurement: kWh
+
+      - name: unmonitored_energy
+        state: >
+          {{ ((states('sensor.nett_usage_energy') | float(0)) -
+            (states('sensor.monitored_energy') | float(0)))
+          }}
+        state_class: total_increasing
+        device_class: energy
+        unit_of_measurement: kWh
+
+      - name: nett_usage_power
+        state: >
+          {{ ((states('sensor.electricity_meter_energieverbruik') | float(0) * 1000) -
+          (states('sensor.electricity_meter_energieproductie') | float(0) * 1000) +
+          (states('sensor.solaredge_current_power') | float(0)) -
+          (states('sensor.shelly_zonnepanelen_minisysteem_power') | float(0)))
+          }}
+        device_class: power
+        unit_of_measurement: W
+
+      - name: nett_measured_power
+        state: >
+          {{ ((states('sensor.droger_power') | float(0)) +
+          (states('sensor.utility_ruimte_wp_wasmachine_switch_0_power') | float(0)) +
+          (states('sensor.utility_ruimte_wp_wasmachine_switch_1_power') | float(0)) +
+          (states('sensor.shellyplug_s_80646f81e39b_power') | float(0)) +
+          (states('sensor.shelly_divers_power') | float(0)) +
+          (states('sensor.shelly_wtw_power') | float(0)) +
+          (states('sensor.shelly_mediahoek_power') | float(0)) +
+          (states('sensor.shelly_computerhoek_power') | float(0)) +
+          (states('sensor.shelly_koelkast_garage_power') | float(0)) +
+          (states('sensor.shelly_vaatwasser_power') | float(0)) +
+          (states('sensor.shelly_boiler_power') | float(0)) +
+          (states('sensor.shelly_meterkast_utilities_power') | float(0)) +
+          (states('sensor.alfen_wallbox_active_power_total_socket_1') | float(0)) +
+          (states('sensor.shelly_vloerverwarming_douche_switch_0_power') | float(0)))
+          }}
+        device_class: power
+        unit_of_measurement: W
+
+      - name: unmonitored_power
+        state: >
+          {{ ((states('sensor.nett_usage_power') | float(0)) -
+            (states('sensor.nett_measured_power') | float(0)))
+          }}
+        device_class: power
+        unit_of_measurement: W
+
+      - name: unmonitored_power2
+        state: >
+          {{ ((states('sensor.nett_usage_power') | float(0)) -
+            (states('sensor.nett_measured_power') | float(0)))
+          }}
+        device_class: power
+        unit_of_measurement: W
+
+      - name: "Delta_CurrentFlow_TargetFlow"
+        unit_of_measurement: "K"
+        state: >
+          {% set current = states('sensor.boiler_current_flow_temperature') | float(0) %}
+          {% set target = states('sensor.thermostat_hc1_target_flow_temperature') | float(0) %}
+
+          {% if is_state('sensor.boiler_compressor_activity', 'heating') and current > target %}
+            {{ (current - target) | round(3, default=0) }}
+          {% elif is_state('sensor.boiler_compressor_activity', 'none') and current < target %}
+            {{ (target - current) | round(3, default=0) }}     
+          {% else %}
+            0
+          {% endif %}
+
+      - name: "Delta_CurrentFlow_TargetFlow TEST"
+        unit_of_measurement: "K"
+        state: >
+          {% set current = states('sensor.boiler_current_flow_temperature') | float(0) %}
+          {% set target = states('sensor.thermostat_hc1_target_flow_temperature') | float(0) %}
+          {{ (current - target) | round(3, default=0) }}
+      # toe te voegen reset bij start van sensor sensor.boiler_compressor_activity = heating
+      - name: "Heating Pump COP"
+        unit_of_measurement: "%"
+        state: >
+          {% set output = states('sensor.boiler_compressor_power_output') | float(0) * 1000 %}
+          {% set usage = states('sensor.utility_ruimte_wp_wasmachine_switch_1_power') | float(0) %}
+          {% set COP = (output / usage) | round(3, default=0) %}
+          {% if (COP > 0) and (COP < 10) %}
+            {{ COP }}
+          {% else %}
+            0
+          {% endif %}
+
+  - binary_sensor:
+      - name: "Current below target"
+        state: >
+          {% set current = states('sensor.boiler_current_flow_temperature') | float(0) %}
+          {% set target = states('sensor.thermostat_hc1_target_flow_temperature') | float(0) %}
+          {{ (current < target) }}
+
+sensor:
+  - platform: integration
+    method: left
+    source: sensor.delta_currentflow_targetflow
+    name: "Integration Delta CurrentFlow TargetFlow"
+    unit_time: min
+  - platform: template
+    sensors:
+      compressoroutputwatt:
+        friendly_name: "ems-esp Boiler Compressor power output (W)"
+        unit_of_measurement: "W"
+        value_template: "{{ states('sensor.boiler_compressor_power_output')|float(0) * 1000 }}"
+
+  - platform: hvcgroep
+    postcode: 3317MD
+    huisnummer: 86
+    resources:
+      - gft
+      - plastic
+      - papier
+      - restafval
+    date_format_default: "%d-%m-%Y"
+    date_format_tomorrow: "Morgen %d-%m-%Y"
+    date_format_today: "Vandaag %d-%m-%Y"
+
+  - platform: template
+    sensors:
+      afval_vandaag:
+        friendly_name: "Vandaag"
+        value_template: >-
+          {% set afval = '' %}
+          {% if is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag') %}
+          {% set afval = 'Groene Bak' %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Blauwe Bak' %}
+            {% else %}
+              {% set afval = 'Blauwe Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Plastic' %}
+            {% else %}
+              {% set afval = 'Plastic' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Grijze Bak' %}
+            {% else %}
+              {% set afval = 'Grijze Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if afval|length %}
+            {{afval}}
+          {% else %}
+            Geen
+          {% endif %}
+
+  - platform: template
+    sensors:
+      afval_morgen:
+        friendly_name: "Morgen"
+        value_template: >-
+          {% set afval = '' %}
+          {% if is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen') %}
+          {% set afval = 'Groene Bak' %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Blauwe Bak' %}
+            {% else %}
+              {% set afval = 'Blauwe Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_plastic_en_verpakking', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Plastic' %}
+            {% else %}
+              {% set afval = 'Plastic' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Grijze Bak' %}
+            {% else %}
+              {% set afval = 'Grijze Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if afval|length %}
+            {{afval}}
+          {% else %}
+            Geen
+          {% endif %}
+      gft_vandaag:
+        friendly_name: "GFT vandaag"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag')
+      rest_vandaag:
+        friendly_name: "Restafval vandaag"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag')
+      papier_vandaag:
+        friendly_name: "Papier vandaag"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag')
+      plastic_vandaag:
+        friendly_name: "Plastic vandaag"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag')
+      gft_morgen:
+        friendly_name: "GFT morgen"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen')
+      rest_morgen:
+        friendly_name: "Restafval morgen"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen')
+      papier_morgen:
+        friendly_name: "Papier morgen"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen')
+      plastic_morgen:
+        friendly_name: "Plastic morgen"
+        value_template: >-
+          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Morgen')
+
+utility_meter:
+  hysteresis_currentflow_targetflow:
+    source: sensor.integration_delta_currentflow_targetflow
+    cycle: yearly
+
+google_assistant:
+  project_id: home-assistant-integrati-49384
+  service_account: !include service_account.json
+  report_state: true
+  exposed_domains:
+    - switch
+    - light
+#  entity_config:
+#    switch.kitchen:
+#      name: CUSTOM_NAME_FOR_GOOGLE_ASSISTANT
+#      aliases:
+#        - BRIGHT_LIGHTS
+#        - ENTRY_LIGHTS
+#    light.living_room:
+#      expose: false
+#      room: LIVING_ROOM
