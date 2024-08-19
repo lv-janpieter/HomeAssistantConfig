@@ -1,6 +1,18 @@
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
 
+spotcast:
+  sp_dc: !secret primary_sp_dc
+  sp_key: !secret primary_sp_key
+  country: SE #optional, added in 3.6.24
+  accounts:
+    janpieter:
+      sp_dc: !secret janpieter_sp_dc
+      sp_key: !secret janpieter_sp_key
+    ming:
+      sp_dc: !secret maaike_sp_dc
+      sp_key: !secret maaike_sp_key
+
 recorder:
   db_url: !secret mariadb_url
 
@@ -198,6 +210,10 @@ template:
             0
           {% endif %}
 
+      - name: "Papier morgen tekst"
+        state: >
+          {{ state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day') }}
+
   - binary_sensor:
       - name: "Current below target"
         state: >
@@ -207,35 +223,35 @@ template:
 
       - name: "GFT vandaag"
         state: >
-          { is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag') }
+          {{ is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag') }}
 
       - name: "Restafval vandaag"
         state: >
-          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag')
+          {{ is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag') }}
 
       - name: "Papier vandaag"
         state: >
-          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag')
+          {{ is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag') }}
 
       - name: "Plastic vandaag"
         state: >
-          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag')
+          {{ is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Vandaag') }}
 
       - name: "GFT morgen"
         state: >
-          is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen')
+          {{ is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen') }}
 
       - name: "Restafval morgen"
         state: >
-          is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen')
+          {{ is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen') }}
 
       - name: "Papier morgen"
         state: >
-          is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen')
+          {{ is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen') }}
 
       - name: "Plastic morgen"
         state: >
-          is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Morgen')
+          {{ is_state_attr('sensor.hvc_groep_oranje_bak_plastic', 'day', 'Morgen') }}
 
 sensor:
   - platform: integration
