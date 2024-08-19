@@ -431,3 +431,99 @@
     entity_id: 346277fd40e2d43ed2ef3c63459167cc
     type: open
   mode: single
+- id: '1722102310167'
+  alias: Beweging hal scherm aan
+  description: Beweging hal scherm aan
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 9323e63d24563973f30913a96bb470cb
+    entity_id: 03010d5bc0167bd8235d9d5d6067a8dd
+    domain: binary_sensor
+  condition: []
+  action:
+  - type: turn_on
+    device_id: e51650625499cc3239b5968e35f03770
+    entity_id: c18e634ab9c2e200f822e54f987594d6
+    domain: switch
+  mode: single
+- id: '1722102374693'
+  alias: Beweging hal scherm uit
+  description: Beweging hal scherm uit
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: 9323e63d24563973f30913a96bb470cb
+    entity_id: 03010d5bc0167bd8235d9d5d6067a8dd
+    domain: binary_sensor
+  condition: []
+  action:
+  - type: turn_off
+    device_id: e51650625499cc3239b5968e35f03770
+    entity_id: c18e634ab9c2e200f822e54f987594d6
+    domain: switch
+  mode: single
+- id: '1723398637367'
+  alias: Shield_On_By_Remote
+  description: Shield aangezet door afstandsbediening
+  trigger:
+  - platform: device
+    type: turned_on
+    device_id: b77e2c16a2c7a9026101535b0b774a03
+    entity_id: 912de9ed97e20384d1c8d3e4504871ae
+    domain: remote
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 9398589dfc91fcd94cce7e4f015f70b1
+    entity_id: effd76bd79668a73448ee8156ce1b0a7
+    domain: remote
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - if:
+    - condition: device
+      device_id: 0750ec1203006acec7cfd15d8e04c886
+      domain: media_player
+      entity_id: 81beea91f88eec3f910a470ecc50cfc5
+      type: is_off
+    then:
+    - type: turn_off
+      device_id: 9398589dfc91fcd94cce7e4f015f70b1
+      entity_id: effd76bd79668a73448ee8156ce1b0a7
+      domain: remote
+  mode: single
+- id: '1723398712916'
+  alias: Shield_Off_By_Remote
+  description: Shield uitgezet door afstandsbediening
+  trigger:
+  - platform: device
+    type: turned_off
+    device_id: b77e2c16a2c7a9026101535b0b774a03
+    entity_id: 912de9ed97e20384d1c8d3e4504871ae
+    domain: remote
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 9398589dfc91fcd94cce7e4f015f70b1
+    entity_id: effd76bd79668a73448ee8156ce1b0a7
+    domain: remote
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - if:
+    - condition: device
+      device_id: 0750ec1203006acec7cfd15d8e04c886
+      domain: media_player
+      entity_id: 81beea91f88eec3f910a470ecc50cfc5
+      type: is_off
+    then:
+    - type: turn_off
+      device_id: 9398589dfc91fcd94cce7e4f015f70b1
+      entity_id: effd76bd79668a73448ee8156ce1b0a7
+      domain: remote
+  mode: single
